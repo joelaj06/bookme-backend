@@ -23,7 +23,7 @@ const getUsers = asyncHandler(async (req, res) => {
         {last_name: {$regex : req.query.query ? req.query.query : ''}},
         {email: {$regex : req.query.query ? req.query.query : ''}},
       ]
-    }).select("-password").populate("role").limit(limit).skip(startIndex);
+    }).select("-password").limit(limit).skip(startIndex);
     
     res.status(200).json(users);
   } else {
