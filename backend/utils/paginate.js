@@ -1,7 +1,10 @@
-const paginateResults = async(model, query, page, limit) => {
+const paginateResults = async({model, query, page, limit}) => {
     const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
   
     const results = {};
+
+    const totalCount = await model.countDocuments(query);
   
     if (endIndex < (await model.countDocuments(query).exec())) {
       results.next = {
@@ -25,6 +28,7 @@ const paginateResults = async(model, query, page, limit) => {
     return {
       limit,
       startIndex,
+      totalCount,
       results: paginatedResults,
       pagination: results,
     };

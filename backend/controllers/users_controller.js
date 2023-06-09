@@ -67,7 +67,8 @@ const addUser = asyncHandler(async (req, res) => {
         gender : req.body.gender,
         skills: req.body.skills,
         job_title : req.body.job_title,
-        status : req.body.status
+        status : req.body.status,
+        is_agent: req.body.is_agent,
       });
 
       await user.save();
@@ -141,6 +142,7 @@ const loginUser = asyncHandler(async (req, res) => {
         company: user.company,
         status : user.status,
         token: token,
+        is_agent: user.is_agent,
       });
       
     } else {
@@ -168,6 +170,7 @@ const getUser = asyncHandler(async (req, res) => {
     company,
     job_description,
     job_title,
+    is_agent,
     status,
   } = await User.findById(req.user.id);
 
@@ -185,7 +188,8 @@ const getUser = asyncHandler(async (req, res) => {
     job_description: job_description,
     job_title: job_title,
     company: company,
-    status: status
+    status: status,
+    is_agent: is_agent,
   });
 });
 
@@ -219,7 +223,8 @@ const updateUser = asyncHandler(async (req, res) => {
       job_title: updatedUser.job_title,
       job_description: updatedUser.job_description,
       company: updatedUser.company,
-      status : updatedUser.status
+      status : updatedUser.status,
+      is_agent: updatedUser.is_agent,
     });
   }
 });

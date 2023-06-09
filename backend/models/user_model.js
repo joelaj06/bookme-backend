@@ -17,12 +17,12 @@ function validateUser(user) {
     phone: Joi.string().min(10).max(15).required(),
     is_agent : Joi.boolean(),
     address: Joi.string().min(5).max(50).required(),
-    job_title: Joi.string(),
+    job_title: Joi.string().allow(null,''),
     image : Joi.string().allow(null,''),
-    status : Joi.string(),
-    job_description : Joi.string(),
-    skills : Joi.array(),
-    company: Joi.string(),
+    status : Joi.string().allow(null),
+    job_description : Joi.string().allow(null),
+    skills : Joi.array().allow(null),
+    company: Joi.string().allow(null),
   
   });
 
