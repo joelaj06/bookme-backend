@@ -19,6 +19,8 @@ const bookingSchema = new mongoose.Schema({
     preliminary_cost: Number,
     notes: String,
     status: String,
+},{
+    timestamps: true,
 });
 
 module.exports = bookingSchema;

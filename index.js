@@ -5,6 +5,7 @@ const users = require('./backend/routes/users');
 const services = require('./backend/routes/services');
 const categories = require('./backend/routes/categories');
 const bookings = require('./backend/routes/bookings');
+const reviews = require('./backend/routes/reviews');
 
 
 const app = express();
@@ -18,6 +19,7 @@ app.use('/api/users', users);
 app.use('/api/services', services);
 app.use('/api/categories', categories);
 app.use('/api/bookings', bookings);
+app.use('/api/reviews', reviews);
 
 
 const port = process.env.PORT || 3001;
