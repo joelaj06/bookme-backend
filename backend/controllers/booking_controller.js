@@ -45,8 +45,21 @@ const getBookings = asyncHandler(async (req, res) => {
   const page = req.query.page;
   const limit = req.query.limit;
   const startIndex = (page - 1) * limit;
+  const userId = req.query.user_id;
+  const agentId = req.query.agent_id;
+  let query = {};
+  if(!userId){
+    query = {
+     agent_id: agentId,
+    }
+  }else{
+    query = {
+      user_id: userId,
+     }
+  }
+
   if (!req.params.id) {
-    const bookings = await Booking.find({})
+    const bookings = await Booking.find(query)
       .populate({ path: "user", select: "-token -password" })
       .populate({ path: "service" })
       .populate({ path: "agent" })

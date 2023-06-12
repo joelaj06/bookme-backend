@@ -22,7 +22,7 @@ const addFavorite = asyncHandler(async (req, res) =>{
 //@access PRIVATE
 const getFavorites = asyncHandler(async (req, res) =>{
   const page = req.query.page;
-  const limit = req.query.limit;
+  const limit = req.query.size;
   const startIndex = (page - 1) * limit;
     const userId = req.query.user_id;
     const id = req.params.id;

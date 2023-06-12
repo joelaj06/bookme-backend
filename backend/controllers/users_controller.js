@@ -13,7 +13,7 @@ const {
 const getUsers = asyncHandler(async (req, res) => {
   if (!req.params.id) {
     const page = req.query.page;
-    const limit = req.query.limit;
+    const limit = req.query.size;
     const startIndex = (page - 1) * limit;
    // const endIndex = page * limit;
     const users = await User.find({

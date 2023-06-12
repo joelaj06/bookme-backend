@@ -13,6 +13,8 @@ const bookingSchema = new mongoose.Schema({
         type: mongoose.SchemaTypes.ObjectId,
         ref: 'Service'
     },
+    user_id:String, 
+    agent_id:String,
     start_date: String,
     end_date: String,
     location: String,

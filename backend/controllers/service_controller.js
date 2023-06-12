@@ -7,7 +7,7 @@ const Service = require("../models/service_model");
 const getServices = asyncHandler(async (req, res) =>{
     if(!req.params.id){
         const page = req.query.page;
-        const limit = req.query.limit;
+        const limit = req.query.size;
         const startIndex = (page - 1) * limit;
     
         const services = await Service.find({

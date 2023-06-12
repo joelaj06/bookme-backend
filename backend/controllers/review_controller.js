@@ -61,7 +61,7 @@ const getReviews = asyncHandler(async (req, res) => {
     }
 
     const page = req.query.page;
-    const limit = req.query.limit;
+    const limit = req.query.size;
     const startIndex = (page - 1) * limit;
     const reviews = await Review.find(query)
       .skip(startIndex)
