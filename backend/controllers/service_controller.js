@@ -16,6 +16,7 @@ const getServices = asyncHandler(async (req, res) =>{
               {title: {$regex : req.query.query ? req.query.query : ''}},
               {location: {$regex : req.query.query ? req.query.query : ''}},
               {category: {$regex : req.query.query ? req.query.query : ''}},
+              { 'category.name': { $regex: req.query.query ? req.query.query : '' } },
             ]
           }).populate({
             path: 'user',
