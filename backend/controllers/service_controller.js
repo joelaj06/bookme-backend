@@ -1,5 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const Service = require("../models/service_model");
+const Review = require("../models/review_model");
 
 // @desc Get all services
 // @route GET /api/services
@@ -151,9 +152,39 @@ const deleteService = asyncHandler(async (req, res) => {
   }
 });
 
+
+
+//@desc fetch popular services
+//@route /api/services/popular_services
+//@access PUBLIC
+const getPopularServices = asyncHandler( async(req, res) => {
+  const popularServices = await Review.aggregate([
+    {
+      $lookup: {
+        from: "services",          // The collection to join with (services collection)
+        localField: "service",   // The field from the reviews collection
+        foreignField: "_id",       // The field from the services collection
+        as: "service_data"          // The field where the service data will be populated
+      }
+    },
+    {
+      $unwind: "$service_data"     // Deconstruct the serviceData array (optional, if you want to have a single object instead of an array)
+    },
+    {$sort: {rating : -1}},
+    { $limit : 5 },
+  ]);
+  if(popularServices){
+    res.status(200).json(popularServices);
+  }else{
+    throw new Error('Failed to fetch popular services')
+  }
+}
+)
+
 module.exports = {
   addService,
   updateService,
   deleteService,
   getServices,
+  getPopularServices,
 };

@@ -41,6 +41,7 @@ const getReviews = asyncHandler(async (req, res) => {
   if (!req.params.id) {
     const userId = req.query.user_id;
     const agentId = req.query.agent_id;
+    console.log(agentId);
 
     if (!agentId) {
       res.status(400);
@@ -51,12 +52,12 @@ const getReviews = asyncHandler(async (req, res) => {
 
     if (userId) {
       query = {
-        user_id: userId,
-        agent_id: agentId,
+        user: userId,
+        agent: agentId,
       };
     } else {
       query = {
-        agent_id: agentId,
+        agent: agentId,
       };
     }
 
