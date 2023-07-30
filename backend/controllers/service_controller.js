@@ -170,7 +170,48 @@ const getPopularServices = asyncHandler( async(req, res) => {
     {
       $unwind: "$service_data"     // Deconstruct the serviceData array (optional, if you want to have a single object instead of an array)
     },
-    {$sort: {rating : -1}},
+    {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "user_data"
+      }
+    },
+    {
+      $unwind: "$user_data" 
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "agent",
+        foreignField: "_id",
+        as: "agent_data"
+      }
+    },
+    {
+      $unwind: "$agent_data" // If you want a single object instead of an array
+    },
+    {
+      $project: {
+        "user_data.password": 0,
+        "agent_data.password": 0,
+        "user_data.tokens": 0,
+        "agent_data.tokens": 0,
+        service:0,// Exclude the "service" field from the output
+        user: 0,    // Exclude the "user" field from the output
+        agent: 0,   // Exclude the "agent" field from the output
+        __v: 0,     // Exclude the "__v" field from the output (optional, if present)
+      }
+    },
+      {$sort: {rating : -1}},
+      {
+        $group: {
+          _id: "$service_data._id",
+          service_data: { $first: "$service_data" }, // Preserve the service_data of the document with the highest rating within each group
+          rating: { $first: "$rating" } // Preserve the highest rating within each group
+        }
+      },
     { $limit : 5 },
   ]);
   if(popularServices){
