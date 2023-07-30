@@ -198,6 +198,7 @@ const getPopularServices = asyncHandler( async(req, res) => {
         "agent_data.password": 0,
         "user_data.tokens": 0,
         "agent_data.tokens": 0,
+        "service_data.user": 0,
         service:0,// Exclude the "service" field from the output
         user: 0,    // Exclude the "user" field from the output
         agent: 0,   // Exclude the "agent" field from the output
