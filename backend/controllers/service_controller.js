@@ -205,13 +205,13 @@ const getPopularServices = asyncHandler( async(req, res) => {
       }
     },
       {$sort: {rating : -1}},
-      {
-        $group: {
-          _id: "$service_data._id",
-          service_data: { $first: "$service_data" }, // Preserve the service_data of the document with the highest rating within each group
-          rating: { $first: "$rating" } // Preserve the highest rating within each group
-        }
-      },
+      // {
+      //   $group: {
+      //     _id: "$service_data._id",
+      //     service_data: { $first: "$service_data" }, // Preserve the service_data of the document with the highest rating within each group
+      //     rating: { $first: "$rating" } // Preserve the highest rating within each group
+      //   }
+      // },
     { $limit : 5 },
   ]);
   if(popularServices){
