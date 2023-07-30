@@ -222,9 +222,40 @@ const getPopularServices = asyncHandler( async(req, res) => {
     throw new Error('Failed to fetch popular services')
   }
 }
-)
+);
+
+//@desc fetch promotions
+//@route /api/services/promotions
+//@access PUBLIC
+const getPromotions = asyncHandler(async(req, res) => {
+  const page = req.query.page;
+  const limit = req.query.size;
+  const startIndex = (page - 1) * limit;
+
+  const services = await Service.find({
+    is_special_offer: true,
+  })
+        .populate({
+          path: "user",
+          select: "-password -tokens", // Exclude "password" and "tokens"
+        })
+        .populate({ path: "categories" })
+        .limit(limit)
+        .skip(startIndex);
+
+    if(services){
+      const totalCount = services.length
+      res.set("total-count", totalCount);
+      res.status(200).json(services);
+
+    }else{
+      throw new Error('Failed to fetch promotions');
+    }
+
+})
 
 module.exports = {
+  getPromotions,
   addService,
   updateService,
   deleteService,
