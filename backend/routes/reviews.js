@@ -6,6 +6,7 @@ const {
     updateReview,
     deleteReview,
     getReviews,
+    getAgentAverageReview,
 } = require('../controllers/review_controller');
 
 const router = express.Router();

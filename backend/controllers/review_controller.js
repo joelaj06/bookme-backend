@@ -71,7 +71,22 @@ const getReviews = asyncHandler(async (req, res) => {
       .populate({ path: "agent", select: "-password -tokens" })
       .populate({ path: "service" });
     if (reviews) {
-      res.status(200).json(reviews);
+      if (userId) {
+        res.status(200).json(reviews);
+      } else {
+        // Calculate the Average Rating
+        let totalRating = 0;
+        for (const review of reviews) {
+          totalRating += review.rating;
+        }
+        const averageRating = totalRating / reviews.length;
+        // Add the Average Rating to the JSON response
+        const responseWithAverage = {
+          reviews: reviews,
+          averageRating: averageRating,
+        };
+        res.status(200).json(responseWithAverage);
+      }
     } else {
       res.status(400);
       throw new Error("Failed to get reviews");
@@ -125,8 +140,6 @@ const deleteReview = asyncHandler(async (req, res) => {
     throw new Error("Review not found");
   }
 });
-
-
 
 module.exports = {
   updateReview,
