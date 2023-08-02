@@ -32,11 +32,7 @@ const getServices = asyncHandler(async (req, res) => {
         $or: [
           { title: { $regex: new RegExp(`^${req.query.query}.*`, "i") } },
           { title: { $regex: req.query.query ? req.query.query : "" } },
-          { location: { $regex: req.query.query ? req.query.query : "" } },
-          { category: { $regex: req.query.query ? req.query.query : "" } },
-          {
-            "category.name": { $regex: req.query.query ? req.query.query : "" },
-          },
+          { location: { $regex: req.query.query ? req.query.query : "",$options: 'i' } },
         ],
       })
         .populate({
@@ -56,7 +52,7 @@ const getServices = asyncHandler(async (req, res) => {
         .limit(limit)
         .skip(startIndex);
     }
-    totalCount = services.length
+    totalCount = services.length;
     res.set("total-count", totalCount);
     res.status(200).json(services);
   } else {
@@ -152,45 +148,43 @@ const deleteService = asyncHandler(async (req, res) => {
   }
 });
 
-
-
 //@desc fetch popular services
 //@route /api/services/popular_services
 //@access PUBLIC
-const getPopularServices = asyncHandler( async(req, res) => {
+const getPopularServices = asyncHandler(async (req, res) => {
   const popularServices = await Review.aggregate([
     {
       $lookup: {
-        from: "services",          // The collection to join with (services collection)
-        localField: "service",   // The field from the reviews collection
-        foreignField: "_id",       // The field from the services collection
-        as: "service_data"          // The field where the service data will be populated
-      }
+        from: "services", // The collection to join with (services collection)
+        localField: "service", // The field from the reviews collection
+        foreignField: "_id", // The field from the services collection
+        as: "service_data", // The field where the service data will be populated
+      },
     },
     {
-      $unwind: "$service_data"     // Deconstruct the serviceData array (optional, if you want to have a single object instead of an array)
+      $unwind: "$service_data", // Deconstruct the serviceData array (optional, if you want to have a single object instead of an array)
     },
     {
       $lookup: {
         from: "users",
         localField: "user",
         foreignField: "_id",
-        as: "user_data"
-      }
+        as: "user_data",
+      },
     },
     {
-      $unwind: "$user_data" 
+      $unwind: "$user_data",
     },
     {
       $lookup: {
         from: "users",
         localField: "agent",
         foreignField: "_id",
-        as: "agent_data"
-      }
+        as: "agent_data",
+      },
     },
     {
-      $unwind: "$agent_data" // If you want a single object instead of an array
+      $unwind: "$agent_data", // If you want a single object instead of an array
     },
     {
       $project: {
@@ -200,59 +194,72 @@ const getPopularServices = asyncHandler( async(req, res) => {
         "agent_data.tokens": 0,
         "service_data.user": 0,
         "service_data.categories": 0,
-        service:0,// Exclude the "service" field from the output
-        user: 0,    // Exclude the "user" field from the output
-        agent: 0,   // Exclude the "agent" field from the output
-        __v: 0,     // Exclude the "__v" field from the output (optional, if present)
-      }
+        service: 0, // Exclude the "service" field from the output
+        user: 0, // Exclude the "user" field from the output
+        agent: 0, // Exclude the "agent" field from the output
+        __v: 0, // Exclude the "__v" field from the output (optional, if present)
+      },
     },
-      {$sort: {rating : -1}},
-      // {
-      //   $group: {
-      //     _id: "$service_data._id",
-      //     service_data: { $first: "$service_data" }, // Preserve the service_data of the document with the highest rating within each group
-      //     rating: { $first: "$rating" } // Preserve the highest rating within each group
-      //   }
-      // },
-    { $limit : 5 },
+    { $sort: { rating: -1 } },
+    // {
+    //   $group: {
+    //     _id: "$service_data._id",
+    //     service_data: { $first: "$service_data" }, // Preserve the service_data of the document with the highest rating within each group
+    //     rating: { $first: "$rating" } // Preserve the highest rating within each group
+    //   }
+    // },
+    { $limit: 5 },
   ]);
-  if(popularServices){
+  if (popularServices) {
     res.status(200).json(popularServices);
-  }else{
-    throw new Error('Failed to fetch popular services')
+  } else {
+    throw new Error("Failed to fetch popular services");
   }
-}
-);
+});
 
 //@desc fetch promotions
 //@route /api/services/promotions
 //@access PUBLIC
-const getPromotions = asyncHandler(async(req, res) => {
+const getPromotions = asyncHandler(async (req, res) => {
   const page = req.query.page;
   const limit = req.query.size;
   const startIndex = (page - 1) * limit;
+  const searchQuery = req.query.query;
 
-  const services = await Service.find({
-    is_special_offer: true,
-  })
-        .populate({
-          path: "user",
-          select: "-password -tokens", // Exclude "password" and "tokens"
-        })
-        .populate({ path: "categories" })
-        .limit(limit)
-        .skip(startIndex);
+  let query = {};
 
-    if(services){
-      const totalCount = services.length
-      res.set("total-count", totalCount);
-      res.status(200).json(services);
-
-    }else{
-      throw new Error('Failed to fetch promotions');
+  if (searchQuery) {
+    query = {
+      $or: [
+        { title: { $regex: new RegExp(`^${req.query.query}.*`, "i") } },
+        { title: { $regex: req.query.query ? req.query.query : "" } },
+        { 'discount.title':{$regex: searchQuery,$options: 'i'} },
+      ],
+      is_special_offer: true,
+    };
+  }else{
+    query = {
+      is_special_offer: true,
     }
+  }
 
-})
+  const services = await Service.find(query)
+    .populate({
+      path: "user",
+      select: "-password -tokens", // Exclude "password" and "tokens"
+    })
+    .populate({ path: "categories" })
+    .limit(limit)
+    .skip(startIndex);
+
+  if (services) {
+    const totalCount = services.length;
+    res.set("total-count", totalCount);
+    res.status(200).json(services);
+  } else {
+    throw new Error("Failed to fetch promotions");
+  }
+});
 
 module.exports = {
   getPromotions,
