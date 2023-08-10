@@ -83,7 +83,7 @@ const getReviews = asyncHandler(async (req, res) => {
         // Add the Average Rating to the JSON response
         const responseWithAverage = {
           reviews: reviews,
-          averageRating: averageRating,
+          average_rating: averageRating,
         };
         res.status(200).json(responseWithAverage);
       }
