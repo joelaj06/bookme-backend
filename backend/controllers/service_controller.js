@@ -106,23 +106,35 @@ const addService = asyncHandler(async (req, res) => {
 //access PRIVATE
 
 const updateService = asyncHandler(async (req, res) => {
-  console.log(req.body);
   if (!req.body) {
     res.status(500);
     throw Error("Internal server error");
   }
   const service = await Service.findById(req.params.id);
   if (service) {
+    let base64Strings =['']
+     base64Strings = req.body.images;
+      const bufferImages = base64Strings.map(base64String =>{
+        return Buffer.from(base64String, "base64")}) ;
+  
     const updatedService = await Service.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      {...req.body, images: bufferImages},
       {
         new: true,
       }
     );
 
     if (updatedService) {
-      res.status(200).json(updatedService);
+      const updatedImagesBase64 = updatedService.images.map(buffer => buffer.toString('base64'));
+      
+      console.log(updatedImagesBase64);
+      const responseWithBase64Images = {
+        ...updatedService.toObject(), // Convert to plain object to avoid Mongoose methods
+        images: updatedImagesBase64
+      };
+      
+      res.status(200).json(responseWithBase64Images);
     } else {
       res.status(400);
       throw new Error("Failed to update service");

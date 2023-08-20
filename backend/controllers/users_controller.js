@@ -51,8 +51,8 @@ const addUser = asyncHandler(async (req, res) => {
       // hashing password
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(req.body.password, salt);
-    
-     
+      const base64String = req.body.image;
+      const bufferImage = Buffer.from(base64String, "base64");
       user = new User({
         first_name: req.body.first_name,
         last_name: req.body.last_name,
@@ -63,7 +63,7 @@ const addUser = asyncHandler(async (req, res) => {
         address: req.body.address,
         job_description: req.body.job_description,
         company: req.body.company,
-        image : req.body.image,
+        image : bufferImage,
         gender : req.body.gender,
         skills: req.body.skills,
         job_title : req.body.job_title,
@@ -129,8 +129,9 @@ const loginUser = asyncHandler(async (req, res) => {
       await User.findByIdAndUpdate(user._id, {
         tokens: [...oldTokens,{token, signedAt: Date.now().toString() }],
       });
-      res.status(201).json({
-        _id: user.id,
+      res.set('access_token',token);
+    const userData = {
+      _id: user.id,
         first_name: user.first_name,
         last_name: user.last_name,
         email: user.email,
@@ -141,8 +142,11 @@ const loginUser = asyncHandler(async (req, res) => {
         job_description:user.job_description,
         company: user.company,
         status : user.status,
-        token: token,
+       // token: token,
         is_agent: user.is_agent,
+    }
+      res.status(200).json({
+        user_token_validation: userData
       });
       
     } else {
@@ -207,14 +211,23 @@ const updateUser = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("User not found");
   } else {
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
+
+    const base64String = req.body.image;
+
+//  Convert the base64 string to a buffer
+    const buffer = Buffer.from(base64String, "base64");
+
+    const updatedUser = await User.findByIdAndUpdate(req.params.id,
+       {...req.body,image:buffer}, {
       new: true,
     });
+
+    const base64Image = updatedUser.image.toString();
     res.status(200).json({
       _id: updatedUser.id,
       first_name: updatedUser.first_name,
       last_name: updatedUser.last_name,
-      image : updatedUser.image,
+      image : base64Image,
       email: updatedUser.email,
       index_number: updatedUser.index_number,
       phone: updatedUser.phone,

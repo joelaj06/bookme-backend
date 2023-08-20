@@ -15,7 +15,7 @@ const serviceSchema = new mongoose.Schema(
     location: {type: String, required: true},
     cover_image: String,
     is_special_offer: {type: Boolean, default: false},
-    images: [{ type: String }],
+    images: [{ type: Buffer }],
     categories: [{ type: mongoose.SchemaTypes.ObjectId, ref: "Category" }],
     price: Number,
     discount: discount,
