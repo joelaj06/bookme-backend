@@ -11,12 +11,13 @@ const chats = require('./backend/routes/chats');
 
 
 
+
 const app = express();
 
 connectToDatabase();
 
 
-app.use(express.json());
+app.use(express.json({limit: '2mb'}));
 
 app.use('/api/users', users);
 app.use('/api/services', services);

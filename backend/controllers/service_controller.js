@@ -32,7 +32,12 @@ const getServices = asyncHandler(async (req, res) => {
         $or: [
           { title: { $regex: new RegExp(`^${req.query.query}.*`, "i") } },
           { title: { $regex: req.query.query ? req.query.query : "" } },
-          { location: { $regex: req.query.query ? req.query.query : "",$options: 'i' } },
+          {
+            location: {
+              $regex: req.query.query ? req.query.query : "",
+              $options: "i",
+            },
+          },
         ],
       })
         .populate({
@@ -46,7 +51,7 @@ const getServices = asyncHandler(async (req, res) => {
       services = await Service.find({})
         .populate({
           path: "user",
-          select: "-password -tokens", // Exclude "password" and "tokens"
+          select: "-password -image -tokens", // Exclude "password" and "tokens"
         })
         .populate({ path: "categories" })
         .limit(limit)
@@ -54,7 +59,15 @@ const getServices = asyncHandler(async (req, res) => {
     }
     totalCount = services.length;
     res.set("total-count", totalCount);
-    res.status(200).json(services);
+
+    const servicesWithBase64Images = services.map((service) => ({
+      ...service._doc,
+      images: service.images.map((imageBuffer) =>
+        imageBuffer.toString("base64")
+      ),
+    }));
+
+    res.status(200).json(servicesWithBase64Images);
   } else {
     const service = await Service.findById(req.params.id);
     if (service) {
@@ -112,28 +125,46 @@ const updateService = asyncHandler(async (req, res) => {
   }
   const service = await Service.findById(req.params.id);
   if (service) {
-    let base64Strings =['']
-     base64Strings = req.body.images;
-      const bufferImages = base64Strings.map(base64String =>{
-        return Buffer.from(base64String, "base64")}) ;
-  
+    let base64Strings = [""];
+    let bufferImages = [];
+    if(req.body.images){
+      base64Strings = req.body.images;
+       bufferImages = base64Strings.map((base64String) => {
+        return Buffer.from(base64String, "base64");
+      });
+    }
+
+    const base64String = req.body.cover_image;
+    const bufferImage = Buffer.from(base64String, "base64");
+    console.log(bufferImage);
+
+    let payload = {};
+
+    if(req.body.images){
+      payload = {
+        ...req.body, images: bufferImages,
+      }
+    }else{
+      payload = {...req.body, cover_image: bufferImage,}
+    }
+
     const updatedService = await Service.findByIdAndUpdate(
       req.params.id,
-      {...req.body, images: bufferImages},
+      payload,
       {
         new: true,
       }
     );
 
     if (updatedService) {
-      const updatedImagesBase64 = updatedService.images.map(buffer => buffer.toString('base64'));
-      
-      console.log(updatedImagesBase64);
+      const updatedImagesBase64 = updatedService.images.map((buffer) =>
+        buffer.toString("base64")
+      );
       const responseWithBase64Images = {
         ...updatedService.toObject(), // Convert to plain object to avoid Mongoose methods
-        images: updatedImagesBase64
+        images: updatedImagesBase64,
       };
-      
+
       res.status(200).json(responseWithBase64Images);
     } else {
       res.status(400);
@@ -245,14 +276,14 @@ const getPromotions = asyncHandler(async (req, res) => {
       $or: [
         { title: { $regex: new RegExp(`^${req.query.query}.*`, "i") } },
         { title: { $regex: req.query.query ? req.query.query : "" } },
-        { 'discount.title':{$regex: searchQuery,$options: 'i'} },
+        { "discount.title": { $regex: searchQuery, $options: "i" } },
       ],
       is_special_offer: true,
     };
-  }else{
+  } else {
     query = {
       is_special_offer: true,
-    }
+    };
   }
 
   const services = await Service.find(query)
@@ -267,7 +298,15 @@ const getPromotions = asyncHandler(async (req, res) => {
   if (services) {
     const totalCount = services.length;
     res.set("total-count", totalCount);
-    res.status(200).json(services);
+
+    const servicesWithBase64Images = services.map((service) => ({
+      ...service._doc,
+      images: service.images.map((imageBuffer) =>
+        imageBuffer.toString("base64")
+      ),
+    }));
+
+    res.status(200).json(servicesWithBase64Images);
   } else {
     throw new Error("Failed to fetch promotions");
   }
