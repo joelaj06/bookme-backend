@@ -15,16 +15,19 @@ const getUsers = asyncHandler(async (req, res) => {
     const page = req.query.page;
     const limit = req.query.size;
     const startIndex = (page - 1) * limit;
-   // const endIndex = page * limit;
+    // const endIndex = page * limit;
     const users = await User.find({
-      "$or" :[
-        {first_name: {$regex :  new RegExp(`^${req.query.query}.*`,'i') }}, 
-        {first_name: {$regex : req.query.query ? req.query.query : ''}},
-        {last_name: {$regex : req.query.query ? req.query.query : ''}},
-        {email: {$regex : req.query.query ? req.query.query : ''}},
-      ]
-    }).select("-password").limit(limit).skip(startIndex);
-    
+      $or: [
+        { first_name: { $regex: new RegExp(`^${req.query.query}.*`, "i") } },
+        { first_name: { $regex: req.query.query ? req.query.query : "" } },
+        { last_name: { $regex: req.query.query ? req.query.query : "" } },
+        { email: { $regex: req.query.query ? req.query.query : "" } },
+      ],
+    })
+      .select("-password")
+      .limit(limit)
+      .skip(startIndex);
+
     res.status(200).json(users);
   } else {
     const user = await User.findById(req.params.id).select("-password");
@@ -63,17 +66,17 @@ const addUser = asyncHandler(async (req, res) => {
         address: req.body.address,
         job_description: req.body.job_description,
         company: req.body.company,
-        image : bufferImage,
-        gender : req.body.gender,
+        image: bufferImage,
+        gender: req.body.gender,
         skills: req.body.skills,
-        job_title : req.body.job_title,
-        status : req.body.status,
+        job_title: req.body.job_title,
+        status: req.body.status,
         is_agent: req.body.is_agent,
       });
 
       await user.save();
       if (user) {
-        console.log(user.company)
+        console.log(user.company);
         res.status(201).json({
           _id: user.id,
           first_name: user.first_name,
@@ -85,11 +88,11 @@ const addUser = asyncHandler(async (req, res) => {
           address: user.address,
           job_description: user.job_description,
           company: user.company,
-          gender : user.gender,
-          image : user.image,
-          job_title : user.job_title,
-          is_agent : user.is_agent,
-          status : user.status,
+          gender: user.gender,
+          image: user.image,
+          job_title: user.job_title,
+          is_agent: user.is_agent,
+          status: user.status,
           token: generateToken(user._id),
         });
       } else {
@@ -112,43 +115,51 @@ const loginUser = asyncHandler(async (req, res) => {
   } else {
     const user = await User.findOne({ email });
     if (user && (await bcrypt.compare(password, user.password))) {
-
       const token = generateToken(user._id);
-      
+
       let oldTokens = user.tokens || [];
 
-      if(oldTokens.length){
+      if (oldTokens.length) {
         oldTokens = oldTokens.filter((token) => {
-          const timeDiff = (Date.now() - parseInt(token.signedAt))/1000;
-          if(timeDiff < 86400){
+          const timeDiff = (Date.now() - parseInt(token.signedAt)) / 1000;
+          if (timeDiff < 86400) {
             return token;
           }
-        })
+        });
       }
 
       await User.findByIdAndUpdate(user._id, {
-        tokens: [...oldTokens,{token, signedAt: Date.now().toString() }],
+        tokens: [...oldTokens, { token, signedAt: Date.now().toString() }],
       });
-      res.set('access_token',token);
-    const userData = {
-      _id: user.id,
+      res.set("access_token", token);
+      let userImage = user.image.toString("base64");
+      // Regular expression to extract base64 string within double quotes
+      const regex = /Binary\.createFromBase64\("([^"]+)"/;
+      const match = regex.exec(userImage);
+
+      if (match) {
+         userImage = match[1];
+      } else {
+        console.log("No base64 string found in the input.");
+      }
+      const userData = {
+        _id: user.id,
         first_name: user.first_name,
         last_name: user.last_name,
         email: user.email,
         index_number: user.index_number,
         phone: user.phone,
-        image: user.image,
+        image: userImage,
         address: user.address,
-        job_description:user.job_description,
+        job_description: user.job_description,
         company: user.company,
-        status : user.status,
-       // token: token,
+        status: user.status,
+        // token: token,
         is_agent: user.is_agent,
-    }
+      };
       res.status(200).json({
-        user_token_validation: userData
+        user_token_validation: userData,
       });
-      
     } else {
       res.status(400);
       throw new Error("Invalid credentials");
@@ -211,23 +222,25 @@ const updateUser = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("User not found");
   } else {
-
     const base64String = req.body.image;
 
-//  Convert the base64 string to a buffer
+    //  Convert the base64 string to a buffer
     const buffer = Buffer.from(base64String, "base64");
 
-    const updatedUser = await User.findByIdAndUpdate(req.params.id,
-       {...req.body,image:buffer}, {
-      new: true,
-    });
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body, image: buffer },
+      {
+        new: true,
+      }
+    );
 
     const base64Image = updatedUser.image.toString();
     res.status(200).json({
       _id: updatedUser.id,
       first_name: updatedUser.first_name,
       last_name: updatedUser.last_name,
-      image : base64Image,
+      image: base64Image,
       email: updatedUser.email,
       index_number: updatedUser.index_number,
       phone: updatedUser.phone,
@@ -236,7 +249,7 @@ const updateUser = asyncHandler(async (req, res) => {
       job_title: updatedUser.job_title,
       job_description: updatedUser.job_description,
       company: updatedUser.company,
-      status : updatedUser.status,
+      status: updatedUser.status,
       is_agent: updatedUser.is_agent,
     });
   }
@@ -262,24 +275,23 @@ const generateToken = (id) => {
   });
 };
 
-
-const logout = asyncHandler( async(req, res) => {
-   if(req.headers && req.headers.authorization){
-    let token = req.headers.authorization.split(' ')[1];
-    if(!token){
-      return res.status(401).json({message: 'Authorization failed'});
-    }else{
+const logout = asyncHandler(async (req, res) => {
+  if (req.headers && req.headers.authorization) {
+    let token = req.headers.authorization.split(" ")[1];
+    if (!token) {
+      return res.status(401).json({ message: "Authorization failed" });
+    } else {
       const tokens = req.user.tokens;
       const newTokens = tokens.filter((t) => {
         t.token != token;
       });
 
-      await User.findByIdAndUpdate(req.user._id, {tokens : newTokens});
+      await User.findByIdAndUpdate(req.user._id, { tokens: newTokens });
 
-      res.status(200).json({message: 'User logged out successfully'})
+      res.status(200).json({ message: "User logged out successfully" });
     }
-   }
-})
+  }
+});
 module.exports = {
   getUsers,
   addUser,
@@ -287,7 +299,5 @@ module.exports = {
   deleteUser,
   loginUser,
   getUser,
-  logout
+  logout,
 };
-
-
