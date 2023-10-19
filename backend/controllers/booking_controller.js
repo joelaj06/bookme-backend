@@ -67,6 +67,7 @@ const getBookings = asyncHandler(async (req, res) => {
       .skip(startIndex);
 
     if (bookings) {
+      console.log(userId);
       res.status(200).json(bookings);
     //  res.set({ total_count: totalCount });
     } else {

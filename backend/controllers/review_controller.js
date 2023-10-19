@@ -1,5 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const Review = require("../models/review_model");
+const { User } = require("../models/user_model");
 
 //@desc add review
 //@route /api/reviews
@@ -41,13 +42,13 @@ const getReviews = asyncHandler(async (req, res) => {
   if (!req.params.id) {
     const userId = req.query.user_id;
     const agentId = req.query.agent_id;
-    console.log(agentId);
 
     if (!agentId) {
       res.status(400);
       throw new Error("agent_id is required.");
     }
 
+    console.log(agentId);
     let query = {};
 
     if (userId) {
@@ -64,16 +65,16 @@ const getReviews = asyncHandler(async (req, res) => {
     const page = req.query.page;
     const limit = req.query.size;
     const startIndex = (page - 1) * limit;
-    const reviews = await Review.find(query)
+
+    const reviews = await Review.find(query, {agent:0, service:0})
       .skip(startIndex)
       .limit(limit)
-      .populate({ path: "user", select: "-password -tokens" })
-      .populate({ path: "agent", select: "-password -tokens" })
-      .populate({ path: "service" });
+      .populate({ path: "user", select: "-password -tokens -image" })
     if (reviews) {
       if (userId) {
         res.status(200).json(reviews);
       } else {
+        const agent = await User.findById(agentId);
         // Calculate the Average Rating
         let totalRating = 0;
         for (const review of reviews) {
@@ -84,6 +85,7 @@ const getReviews = asyncHandler(async (req, res) => {
         const responseWithAverage = {
           reviews: reviews,
           average_rating: averageRating,
+          agent: agent
         };
         res.status(200).json(responseWithAverage);
       }

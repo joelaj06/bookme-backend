@@ -6,6 +6,7 @@ const {
   validateUser,
   validateUserLogins,
 } = require("../models/user_model");
+const { request } = require("express");
 
 // @desc Get all users
 // @route GET /api/users
@@ -138,7 +139,7 @@ const loginUser = asyncHandler(async (req, res) => {
       const match = regex.exec(userImage);
 
       if (match) {
-         userImage = match[1];
+        userImage = match[1];
       } else {
         console.log("No base64 string found in the input.");
       }
@@ -222,18 +223,27 @@ const updateUser = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("User not found");
   } else {
-    const base64String = req.body.image;
-
+    let body;
+   
+    if (req.body.image) {
+      const base64String = req.body.image;
     //  Convert the base64 string to a buffer
     const buffer = Buffer.from(base64String, "base64");
+      body = {
+        ...req.body,
+        image: buffer,
+      };
+    } else {
+      body = {
+        ...req.body,
+      };
+    }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      { ...req.body, image: buffer },
-      {
-        new: true,
-      }
-    );
+    
+
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, body, {
+      new: true,
+    });
 
     const base64Image = updatedUser.image.toString();
     res.status(200).json({
