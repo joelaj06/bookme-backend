@@ -1,6 +1,30 @@
 const asyncHandler = require("express-async-handler");
 const Service = require("../models/service_model");
 const Review = require("../models/review_model");
+const { cleanSingleRecord } = require("../utils/helper");
+
+//@desc Get services by user
+//@route GET /api/services/user
+//@access PRIVATE
+const getServiceByUser = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const userId = user._id;
+  const services = await Service.find({ user: userId }).populate("categories", 
+  ).select('-user');
+
+  if (services) {
+    const servicesWithBase64Images = services.map((service) => ({
+      ...service._doc,
+      images: service.images.map((imageBuffer) =>
+        imageBuffer.toString("base64")
+      ),
+    }));
+    res.status(200).json(cleanSingleRecord(servicesWithBase64Images));
+  } else {
+    res.status(400);
+    throw new Error("Service not found");
+  }
+});
 
 // @desc Get all services
 // @route GET /api/services
@@ -73,6 +97,7 @@ const getServices = asyncHandler(async (req, res) => {
     if (service) {
       res.status(200).json(service);
     } else {
+      res.status(404);
       throw new Error("Service not found");
     }
   }
@@ -110,6 +135,7 @@ const addService = asyncHandler(async (req, res) => {
   if (service) {
     res.status(201).json(service);
   } else {
+    res.status(500);
     throw new Error("Failed to save service");
   }
 });
@@ -127,25 +153,25 @@ const updateService = asyncHandler(async (req, res) => {
   if (service) {
     let base64Strings = [""];
     let bufferImages = [];
-    if(req.body.images){
+    if (req.body.images) {
       base64Strings = req.body.images;
-       bufferImages = base64Strings.map((base64String) => {
+      bufferImages = base64Strings.map((base64String) => {
         return Buffer.from(base64String, "base64");
       });
     }
 
     const base64String = req.body.cover_image;
     const bufferImage = Buffer.from(base64String, "base64");
-    console.log(bufferImage);
 
     let payload = {};
 
-    if(req.body.images){
+    if (req.body.images) {
       payload = {
-        ...req.body, images: bufferImages,
-      }
-    }else{
-      payload = {...req.body, cover_image: bufferImage,}
+        ...req.body,
+        images: bufferImages,
+      };
+    } else {
+      payload = { ...req.body, cover_image: bufferImage };
     }
 
     const updatedService = await Service.findByIdAndUpdate(
@@ -256,6 +282,7 @@ const getPopularServices = asyncHandler(async (req, res) => {
   if (popularServices) {
     res.status(200).json(popularServices);
   } else {
+    res.status(400);
     throw new Error("Failed to fetch popular services");
   }
 });
@@ -308,6 +335,7 @@ const getPromotions = asyncHandler(async (req, res) => {
 
     res.status(200).json(servicesWithBase64Images);
   } else {
+    res.status(400);
     throw new Error("Failed to fetch promotions");
   }
 });
@@ -319,4 +347,5 @@ module.exports = {
   deleteService,
   getServices,
   getPopularServices,
+  getServiceByUser,
 };
