@@ -6,10 +6,20 @@ const Favorite = require("../models/favorite_model");
 //@access PRIVATE
 const addFavorite = asyncHandler(async (req, res) => {
   const { service, user, user_id } = req.body;
+
+  const serv = await Favorite.findOne({service: service,user_id: user_id});
+  if(serv){
+    res.status(400);
+    throw new Error('Service already exist in favorites');
+  }
   const favorite = new Favorite({ service, user, user_id });
-  await favorite.save();
-  if (favorite) {
-    res.status(200).json(favorite);
+  const savedFavorite = await favorite.save();
+
+  // Populate the 'service' and 'user' fields in the saved 'favorite'
+  if (savedFavorite) {
+    res.status(200).json({
+      _id: savedFavorite._id
+    });
   } else {
     res.status(400);
     throw new Error("Failed to create favorite");
@@ -33,7 +43,14 @@ const getFavorites = asyncHandler(async (req, res) => {
         path: "user",
         select: "-password -tokens", // Exclude "password" and "tokens"
       })
-      .populate({ path: "service" });
+      .populate({
+        path: "service",
+        populate: {
+          path: "user",
+          select: "-password -tokens", // Exclude "password" and "tokens"
+        },
+        select: "-categories"
+      });
 
     if (favorites) {
       //iterate through the data and convert the Buffer Images to base64 Strings
@@ -77,7 +94,7 @@ const deleteFavorite = asyncHandler(async (req, res) => {
   const favorite = await Favorite.findById(id);
   if (favorite) {
     await favorite.deleteOne();
-    res.status(200).json({ id: id });
+    res.status(200).json({ _id: id });
   } else {
     res.status(400);
     throw new Error("Favorite service not found");
