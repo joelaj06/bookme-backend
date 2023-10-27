@@ -60,14 +60,13 @@ const getBookings = asyncHandler(async (req, res) => {
 
   if (!req.params.id) {
     const bookings = await Booking.find(query)
-      .populate({ path: "user", select: "-token -password" })
-      .populate({ path: "service" })
-      .populate({ path: "agent" })
+      .populate({ path: "user", select: "-token -password -tokens -image" })
+      .populate({ path: "service", select: "-categories -images -user"})
+      .populate({ path: "agent", select: "-token, -password -tokens -image" })
       .limit(limit)
       .skip(startIndex);
 
     if (bookings) {
-      console.log(userId);
       res.status(200).json(bookings);
     //  res.set({ total_count: totalCount });
     } else {
@@ -87,7 +86,9 @@ const updateBooking = asyncHandler(async (req, res) => {
   if (booking) {
     const updatedBooking = await Booking.findByIdAndUpdate(id, req.body, {
       new: true,
-    });
+    }) .populate({ path: "user", select: "-token -password -tokens -image" })
+    .populate({ path: "service", select: "-categories -images -user"})
+    .populate({ path: "agent", select: "-token, -password -tokens -image" });
 
     if (updatedBooking) {
       res.status(200).json(updatedBooking);

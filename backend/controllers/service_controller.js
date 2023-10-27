@@ -153,6 +153,7 @@ const updateService = asyncHandler(async (req, res) => {
   if (service) {
     let base64Strings = [""];
     let bufferImages = [];
+    let bufferImage;
     if (req.body.images) {
       base64Strings = req.body.images;
       bufferImages = base64Strings.map((base64String) => {
@@ -160,8 +161,11 @@ const updateService = asyncHandler(async (req, res) => {
       });
     }
 
-    const base64String = req.body.cover_image;
-    const bufferImage = Buffer.from(base64String, "base64");
+    if(req.body.cover_image){
+      const base64String = req.body.cover_image;
+      bufferImage = Buffer.from(base64String, "base64");
+
+    }
 
     let payload = {};
 
@@ -180,7 +184,7 @@ const updateService = asyncHandler(async (req, res) => {
       {
         new: true,
       }
-    );
+    ).select('-user -categories');
 
     if (updatedService) {
       const updatedImagesBase64 = updatedService.images.map((buffer) =>
