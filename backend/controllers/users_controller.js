@@ -285,6 +285,10 @@ const generateToken = (id) => {
   });
 };
 
+
+// @desc log user out
+// @route DELETE /api/users/auth/logout
+// @access Private
 const logout = asyncHandler(async (req, res) => {
   if (req.headers && req.headers.authorization) {
     let token = req.headers.authorization.split(" ")[1];

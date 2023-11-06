@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post('/initiate', protect, validateEmptyPayload, initiateChat);
 router.post('/:id/message', protect, validateEmptyPayload, postMessage);
-router.get('/:id',protect, validateEmptyPayload, getChats);
+router.get('/',protect, validateEmptyPayload, getChats);
 router.get('/:id/messages', protect, validateEmptyPayload, getMessages);
 
 

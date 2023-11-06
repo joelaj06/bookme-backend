@@ -66,15 +66,15 @@ const getReviews = asyncHandler(async (req, res) => {
     const limit = req.query.size;
     const startIndex = (page - 1) * limit;
 
-    const reviews = await Review.find(query, {agent:0, service:0})
+    const reviews = await Review.find(query, { agent: 0, service: 0 })
       .skip(startIndex)
       .limit(limit)
-      .populate({ path: "user", select: "-password -tokens -image" })
+      .populate({ path: "user", select: "-password -tokens -image" });
     if (reviews) {
       if (userId) {
         res.status(200).json(reviews);
       } else {
-        const agent = await User.findById(agentId);
+        const agent = await User.findById(agentId).select('-image -token -tokens -password');
         // Calculate the Average Rating
         let totalRating = 0;
         for (const review of reviews) {
@@ -85,7 +85,7 @@ const getReviews = asyncHandler(async (req, res) => {
         const responseWithAverage = {
           reviews: reviews,
           average_rating: averageRating,
-          agent: agent
+          agent: agent,
         };
         res.status(200).json(responseWithAverage);
       }

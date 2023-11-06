@@ -16,21 +16,20 @@ const postMessage = asyncHandler(async(req, res)=>{
         throw new Error('Failed to connect to chat');
     }
 
-    const messagePayload = {
-        message_text : message.message_text,
-    }
     const currentLoggedInUser = req.user;
 
     const newMessage = new Message({
         sender : currentLoggedInUser.id,
         recipient: recipient,
-        message: messagePayload,
+        content: message,
         chat: chatId,
     });
-
+    
     await newMessage.save();
     if(newMessage){
-        res.status(200).json(newMessage);
+        const message = await Message.findById(newMessage._id).populate({path: 'sender', select: '-password -tokens'})
+        .populate({path: 'recipient', select: '-password -tokens'});
+        res.status(200).json(message);
     }else{
         res.status(400);
         throw new Error('Failed to create message');
@@ -65,6 +64,7 @@ const getMessages = asyncHandler( async (req, res) =>{
     .skip(startIndex);
 
     if(messages){
+        res.set('total-count', messages.length);
         res.status(200).json(messages);
     }else{
         res.status(400);
