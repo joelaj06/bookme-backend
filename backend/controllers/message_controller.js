@@ -29,6 +29,9 @@ const postMessage = asyncHandler(async(req, res)=>{
     if(newMessage){
         const message = await Message.findById(newMessage._id).populate({path: 'sender', select: '-password -tokens'})
         .populate({path: 'recipient', select: '-password -tokens'});
+         await Chat.findByIdAndUpdate(chatId, {
+          last_message: message.content.message_text,
+       }); 
         res.status(200).json(message);
     }else{
         res.status(400);

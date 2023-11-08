@@ -47,7 +47,6 @@ io.on('connection', (socket) => {
       })
     }
     
-    console.log('Connected Users',activeUsers);
     io.emit('registered-users', activeUsers);
   });
 
@@ -63,8 +62,7 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     activeUsers = activeUsers.filter((user) => user.socketId !== socket.id);
-    console.log('User Disconnected', activeUsers);
-    io.emit('get-users',activeUsers);
+    io.emit('registered-users',activeUsers);
   });
 });
 
