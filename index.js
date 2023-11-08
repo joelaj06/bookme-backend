@@ -38,10 +38,8 @@ let activeUsers = [];
 io.on('connection', (socket) => {
   console.log('A user connected to the socket');
 
-  // Implement your socket.io event handling here
-  socket.on('new-user-add', (newUserId) => {
-   
-    // You can broadcast data to other connected clients here
+  // register users to the socket
+  socket.on('register', (newUserId) => {
     if(!activeUsers.some((user) => user.userId == newUserId)){
       activeUsers.push({
         userId: newUserId,
@@ -50,8 +48,18 @@ io.on('connection', (socket) => {
     }
     
     console.log('Connected Users',activeUsers);
-    io.emit('get-users', activeUsers);
+    io.emit('registered-users', activeUsers);
   });
+
+  //recieve and send message to client
+  socket.on('send-message', (data) =>{
+    const {recipient} = data;
+    console.log(data);
+    const user = activeUsers.find((user) => user.userId == recipient);
+    if(user){
+        socket.to(user.socketId).emit('receive-message',data);
+    }
+  })
 
   socket.on('disconnect', () => {
     activeUsers = activeUsers.filter((user) => user.socketId !== socket.id);

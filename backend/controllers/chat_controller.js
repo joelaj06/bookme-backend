@@ -92,6 +92,7 @@ const getChats = asyncHandler( async (req, res) =>{
     .skip(startIndex)
     .limit(limit)
     .populate({path: 'user', select: '-password -tokens'})
+    .populate({path: 'initiator', select: '-password -tokens'})
     .sort({createdAt: -1});
     if(chats){
         res.set('total-count',chats.length);
