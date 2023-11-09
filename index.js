@@ -40,11 +40,14 @@ io.on('connection', (socket) => {
 
   // register users to the socket
   socket.on('register', (newUserId) => {
+    console.log(newUserId);
     if(!activeUsers.some((user) => user.userId == newUserId)){
       activeUsers.push({
         userId: newUserId,
         socketId: socket.id,
       })
+    }else{
+      console.log('User already registered')
     }
     
     io.emit('registered-users', activeUsers);
@@ -53,12 +56,13 @@ io.on('connection', (socket) => {
   //recieve and send message to client
   socket.on('send-message', (data) =>{
     const {recipient} = data;
-    console.log(data);
     const user = activeUsers.find((user) => user.userId == recipient);
     if(user){
         socket.to(user.socketId).emit('receive-message',data);
     }
-  })
+  });
+
+
 
   socket.on('disconnect', () => {
     activeUsers = activeUsers.filter((user) => user.socketId !== socket.id);
