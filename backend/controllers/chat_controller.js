@@ -24,7 +24,7 @@ const initiateChat = asyncHandler(async (req, res) => {
   }
 
   // check if receiver is not the user who is requesting a chat
-  if (receiver._id.toString() === req.user._id.toString()) {
+  if (receiver._id === req.user._id) {
     res.status(400);
     throw new Error("You cannot chat with yourself");
   }
@@ -32,8 +32,10 @@ const initiateChat = asyncHandler(async (req, res) => {
   try {
     //trying to avoid duplicate chat
     const availableChat = await Chat.findOne({
-        user: user,
-        initiator: initiator.id,
+      $or: [
+        { user: user, initiator: initiator.id },
+        { user: initiator.id, initiator: user }
+    ]
     });
 
     if (availableChat) {

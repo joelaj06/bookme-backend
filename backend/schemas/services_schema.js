@@ -5,6 +5,7 @@ const discount = new mongoose.Schema({
     value: Number,
     end_date: String,
     start_date: String,
+    title : String,
   });
 
 const serviceSchema = new mongoose.Schema(

@@ -1,29 +1,29 @@
-const express = require('express');
-const http = require('http'); // Import the HTTP module
-const { connectToDatabase } = require('./backend/config/conn.js');
-const { errorHandler } = require('./backend/middleware/error_middleware.js');
-const users = require('./backend/routes/users');
-const services = require('./backend/routes/services');
-const categories = require('./backend/routes/categories');
-const bookings = require('./backend/routes/bookings');
-const reviews = require('./backend/routes/reviews');
-const favorites = require('./backend/routes/favorites');
-const chats = require('./backend/routes/chats');
-const socketIo = require('socket.io'); // Import the Socket.io library
+const express = require("express");
+const http = require("http"); // Import the HTTP module
+const { connectToDatabase } = require("./backend/config/conn.js");
+const { errorHandler } = require("./backend/middleware/error_middleware.js");
+const users = require("./backend/routes/users");
+const services = require("./backend/routes/services");
+const categories = require("./backend/routes/categories");
+const bookings = require("./backend/routes/bookings");
+const reviews = require("./backend/routes/reviews");
+const favorites = require("./backend/routes/favorites");
+const chats = require("./backend/routes/chats");
+const socketIo = require("socket.io"); // Import the Socket.io library
 
 const app = express();
 
 connectToDatabase();
 
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: "2mb" }));
 
-app.use('/api/users', users);
-app.use('/api/services', services);
-app.use('/api/categories', categories);
-app.use('/api/bookings', bookings);
-app.use('/api/reviews', reviews);
-app.use('/api/favorites', favorites);
-app.use('/api/chats', chats);
+app.use("/api/users", users);
+app.use("/api/services", services);
+app.use("/api/categories", categories);
+app.use("/api/bookings", bookings);
+app.use("/api/reviews", reviews);
+app.use("/api/favorites", favorites);
+app.use("/api/chats", chats);
 
 const port = process.env.PORT || 3001;
 
@@ -35,38 +35,51 @@ const io = socketIo(server); // Attach Socket.io to the server
 //users in the connections
 let activeUsers = [];
 
-io.on('connection', (socket) => {
-  console.log('A user connected to the socket');
+io.on("connection", (socket) => {
+  console.log("A user connected to the socket");
 
   // register users to the socket
-  socket.on('register', (newUserId) => {
+  socket.on("register", (newUserId) => {
     console.log(newUserId);
-    if(!activeUsers.some((user) => user.userId == newUserId)){
+    if (!activeUsers.some((user) => user.userId == newUserId)) {
       activeUsers.push({
         userId: newUserId,
         socketId: socket.id,
-      })
-    }else{
-      console.log('User already registered')
+      });
+    } else {
+      console.log("User already registered");
     }
-    
-    io.emit('registered-users', activeUsers);
+
+    io.emit("registered-users", activeUsers);
   });
 
   //recieve and send message to client
-  socket.on('send-message', (data) =>{
-    const {recipient} = data;
+  socket.on("send-message", (data) => {
+    const { recipient } = data;
     const user = activeUsers.find((user) => user.userId == recipient);
-    if(user){
-        socket.to(user.socketId).emit('receive-message',data);
+    if (user) {
+      socket.to(user.socketId).emit("receive-message", data);
+      //send message notification
+      /*
+         {
+          chatId: '6543ad7d49f38e7805c2ea3d',
+          recipient: '6481dd52edc2a88e65c66bb6',
+          message: { message_text: 'Hi' }
+        }
+          */
+         const message = {
+          ...data,
+          date: new Date(),
+          isRead: false
+         }
+         console.log(message);
+      socket.to(user.socketId).emit("get-notification",message);
     }
   });
 
-
-
-  socket.on('disconnect', () => {
+  socket.on("disconnect", () => {
     activeUsers = activeUsers.filter((user) => user.socketId !== socket.id);
-    io.emit('registered-users',activeUsers);
+    io.emit("registered-users", activeUsers);
   });
 });
 

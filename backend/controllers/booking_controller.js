@@ -62,7 +62,7 @@ const getBookings = asyncHandler(async (req, res) => {
     const bookings = await Booking.find(query)
       .populate({ path: "user", select: "-token -password -tokens -image" })
       .populate({ path: "service", select: "-categories -images -user"})
-      .populate({ path: "agent", select: "-token, -password -tokens -image" })
+      .populate({ path: "agent", select: "-token, -password -tokens" })
       .limit(limit)
       .skip(startIndex);
 
@@ -116,6 +116,8 @@ const deleteBooking = asyncHandler(async (req, res) => {
     throw new Error("Booking not found");
   }
 });
+
+//TODO implement booking status
 
 module.exports = {
   addBooking,
