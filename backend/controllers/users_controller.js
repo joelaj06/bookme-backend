@@ -41,7 +41,7 @@ const getUsers = asyncHandler(async (req, res) => {
 });
 
 // @desc Register user
-// @route POST /api/users
+// @route POST /api/users/auth/signup
 // @access Private
 const addUser = asyncHandler(async (req, res) => {
   const { error } = validateUser(req.body);

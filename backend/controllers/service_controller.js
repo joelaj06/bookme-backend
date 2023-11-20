@@ -131,9 +131,13 @@ const addService = asyncHandler(async (req, res) => {
     discount: discount,
   });
   await service.save();
-
+    
   if (service) {
-    res.status(201).json(service);
+    const data = await Service.findById(service._id)
+    .select('-user -categories');
+    if(data){
+      res.status(201).json(data);
+    }
   } else {
     res.status(500);
     throw new Error("Failed to save service");

@@ -20,9 +20,9 @@ function validateUser(user) {
     job_title: Joi.string().allow(null,''),
     image : Joi.string().allow(null,''),
     status : Joi.string().allow(null),
-    job_description : Joi.string().allow(null),
+    job_description : Joi.string().allow(null,''),
     skills : Joi.array().allow(null),
-    company: Joi.string().allow(null),
+    company: Joi.string().allow(null,''),
   
   });
 

@@ -18,7 +18,7 @@ router.get('/user',protect,validateEmptyPayload,getServiceByUser,);
 router.get('/popular_services',validateEmptyPayload,getPopularServices,);
 router.get('/promotions',validateEmptyPayload,getPromotions,);
 router.get("/:id?",validateEmptyPayload,getServices,);
-router.post('/',protect,validateEmptyPayload, addService);
+router.post('/',validateEmptyPayload, addService);
 router.route('/:id').put(protect,validateEmptyPayload, updateService).delete(protect, deleteService);
 
 module.exports = router;
