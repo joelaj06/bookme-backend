@@ -1,12 +1,15 @@
 const asyncHandler = require("express-async-handler");
-const Booking = require("../models/booking_model");
-const paginateResults = require("../utils/paginate");
-const { response } = require("express");
+const {Booking,validateBooking} = require("../models/booking_model");
 
 //@desc book an agent
 //@route /api/bookings
 //@access PRIVATE
 const addBooking = asyncHandler(async (req, res) => {
+  const { error } = validateBooking(req.body);
+  if(error){
+    res.status(400);
+    throw new Error(error.details[0].message);
+  }
   const {
     user,
     service,
@@ -17,6 +20,8 @@ const addBooking = asyncHandler(async (req, res) => {
     location,
     notes,
     agent,
+    agent_id,
+    user_id,
   } = req.body;
   const booking = new Booking({
     user,
@@ -28,10 +33,16 @@ const addBooking = asyncHandler(async (req, res) => {
     location,
     notes,
     agent,
+    agent_id,
+    user_id,
   });
   await booking.save();
   if (booking) {
-    res.status(201).json(booking);
+    const response = await Booking.findById(booking._id)
+    .select('-user -agent -service');
+    if(response){
+      res.status(201).json(response);
+    }
   } else {
     res.status(400);
     throw new Error("Failed to create booking");
@@ -68,6 +79,7 @@ const getBookings = asyncHandler(async (req, res) => {
 
     if (bookings) {
       res.status(200).json(bookings);
+      console.log(bookings.length);
     //  res.set({ total_count: totalCount });
     } else {
       res.status(400);
