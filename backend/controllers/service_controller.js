@@ -8,9 +8,15 @@ const { cleanSingleRecord } = require("../utils/helper");
 //@access PRIVATE
 const getServiceByUser = asyncHandler(async (req, res) => {
   const user = req.user;
-  const userId = user._id;
+  let userId;
+  if(req.query.agentId){
+     userId = req.query.agentId;
+  }else{
+     userId = user._id;
+  }
+  
   const services = await Service.find({ user: userId }).populate("categories", 
-  ).select('-user');
+  ).populate({path: 'user', select: '-password -token -tokens'});
 
   if (services) {
     const servicesWithBase64Images = services.map((service) => ({
