@@ -80,13 +80,20 @@ const getReviews = asyncHandler(async (req, res) => {
         for (const review of reviews) {
           totalRating += review.rating;
         }
-        const averageRating = totalRating / reviews.length;
+        let averageRating = 0;
+        if(reviews.length == 0){
+          averageRating = 0;
+        }else{
+          averageRating = totalRating / reviews.length;
+
+        }
         // Add the Average Rating to the JSON response
         const responseWithAverage = {
           reviews: reviews,
           average_rating: averageRating,
           agent: agent,
         };
+    
         res.status(200).json(responseWithAverage);
       }
     } else {

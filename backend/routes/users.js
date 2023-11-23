@@ -7,10 +7,12 @@ const {
   loginUser,
   getUser,
   logout,
+  getAgents,
 } = require("../controllers/users_controller.js");
 const { protect } = require("../middleware/auth_middleware");
 const router = express.Router();
 
+router.get("/agents",getAgents);
 router.post("/auth/signup", addUser);
 router.post("/auth/login", loginUser);
 router.delete('/auth/logout',protect, logout);

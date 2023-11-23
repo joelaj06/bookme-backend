@@ -6,7 +6,6 @@ const {
   validateUser,
   validateUserLogins,
 } = require("../models/user_model");
-const { request } = require("express");
 
 // @desc Get all users
 // @route GET /api/users
@@ -224,11 +223,11 @@ const updateUser = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   } else {
     let body;
-   
+
     if (req.body.image) {
       const base64String = req.body.image;
-    //  Convert the base64 string to a buffer
-    const buffer = Buffer.from(base64String, "base64");
+      //  Convert the base64 string to a buffer
+      const buffer = Buffer.from(base64String, "base64");
       body = {
         ...req.body,
         image: buffer,
@@ -238,8 +237,6 @@ const updateUser = asyncHandler(async (req, res) => {
         ...req.body,
       };
     }
-
-    
 
     const updatedUser = await User.findByIdAndUpdate(req.params.id, body, {
       new: true,
@@ -285,7 +282,6 @@ const generateToken = (id) => {
   });
 };
 
-
 // @desc log user out
 // @route DELETE /api/users/auth/logout
 // @access Private
@@ -306,7 +302,52 @@ const logout = asyncHandler(async (req, res) => {
     }
   }
 });
+
+//@desc get all agents
+//@route GET api/users/agents
+//@access PRIVATE
+const getAgents = asyncHandler(async (req, res) => {
+  const page = req.query.page;
+  const limit = req.query.size;
+  const query = req.query.query;
+  const startIndex = (page - 1) * limit;
+
+  let searchQuery = {};
+  if (query) {
+    searchQuery = {
+      is_agent: true,
+      $or: [
+        { first_name: { $regex: new RegExp(`^${req.query.query}.*`, "i") } },
+        { last_name: { $regex: new RegExp(`^${req.query.query}.*`, "i") } },
+        {
+          job_description: { $regex: new RegExp(`^${req.query.query}.*`, "i") },
+        },
+        { job_title: { $regex: new RegExp(`^${req.query.query}.*`, "i") } },
+        { skills: { $in: [req.query.query] } },
+      ],
+    };
+  } else {
+    searchQuery = {
+      is_agent: true,
+    };
+  }
+  let totalCount = 0;
+  const agents = await User.find(searchQuery)
+    .select("-password")
+    .limit(limit)
+    .skip(startIndex);
+
+  if (agents) {
+    totalCount = agents.length;
+    res.set("total-count", totalCount);
+    res.status(200).json(agents);
+  } else {
+    res.status(400);
+    throw new Error("Failed to fetch agents");
+  }
+});
 module.exports = {
+  getAgents,
   getUsers,
   addUser,
   updateUser,
