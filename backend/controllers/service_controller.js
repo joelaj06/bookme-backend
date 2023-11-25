@@ -9,14 +9,15 @@ const { cleanSingleRecord } = require("../utils/helper");
 const getServiceByUser = asyncHandler(async (req, res) => {
   const user = req.user;
   let userId;
-  if(req.query.agentId){
-     userId = req.query.agentId;
-  }else{
-     userId = user._id;
+  if (req.query.agentId) {
+    userId = req.query.agentId;
+  } else {
+    userId = user._id;
   }
-  
-  const services = await Service.find({ user: userId }).populate("categories", 
-  ).populate({path: 'user', select: '-password -token -tokens'});
+
+  const services = await Service.find({ user: userId })
+    .populate("categories")
+    .populate({ path: "user", select: "-password -token -tokens" });
 
   if (services) {
     const servicesWithBase64Images = services.map((service) => ({
@@ -113,35 +114,44 @@ const getServices = asyncHandler(async (req, res) => {
 // @route POST /api/services
 // @access Private
 const addService = asyncHandler(async (req, res) => {
-  const {
-    title,
-    user,
-    description,
-    location,
-    cover_image,
-    images,
-    categories,
-    price,
-    discount,
-  } = req.body;
+  let payload = {};
+  let base64Strings = [""];
+  let serviceImages = [];
+  let coverImage;
 
-  const service = new Service({
-    title: title,
-    user: user,
-    description: description,
-    location: location,
-    cover_image: cover_image,
-    images: images,
-    categories: categories,
-    price: price,
-    discount: discount,
-  });
+  if (req.body.images) {
+    //iterate through images and upload them to cloudinary
+    base64Strings = req.body.images;
+    serviceImages = base64Strings.map(async (base64String) => {
+      let image = await uploadImage(base64String);
+      return image;
+    });
+  }
+
+  if (req.body.cover_image) {
+    const base64String = req.body.cover_image;
+    coverImage = await uploadImage(base64String);
+  }
+
+  if (req.body.images) {
+    payload = {
+      ...req.body,
+      images: serviceImages,
+    };
+  } else if (req.body.cover_image) {
+    payload = { ...req.body, cover_image: coverImage };
+  } else {
+    payload = { ...req.body };
+  }
+
+  const service = new Service(payload);
   await service.save();
-    
+
   if (service) {
-    const data = await Service.findById(service._id)
-    .select('-user -categories');
-    if(data){
+    const data = await Service.findById(service._id).select(
+      "-user -categories"
+    );
+    if (data) {
       res.status(201).json(data);
     }
   } else {
@@ -162,19 +172,21 @@ const updateService = asyncHandler(async (req, res) => {
   const service = await Service.findById(req.params.id);
   if (service) {
     let base64Strings = [""];
-    let bufferImages = [];
-    let bufferImage;
+    let images = [];
+    let coverImage;
+
     if (req.body.images) {
+      //iterate through images and upload them to cloudinary
       base64Strings = req.body.images;
-      bufferImages = base64Strings.map((base64String) => {
-        return Buffer.from(base64String, "base64");
+      images = base64Strings.map(async (base64String) => {
+        let image = await uploadImage(base64String);
+        return image;
       });
     }
 
-    if(req.body.cover_image){
+    if (req.body.cover_image) {
       const base64String = req.body.cover_image;
-      bufferImage = Buffer.from(base64String, "base64");
-
+      coverImage = await uploadImage(base64String);
     }
 
     let payload = {};
@@ -182,10 +194,13 @@ const updateService = asyncHandler(async (req, res) => {
     if (req.body.images) {
       payload = {
         ...req.body,
-        images: bufferImages,
+        images: images,
+        cover_image: coverImage,
       };
+    } else if (req.body.cover_image) {
+      payload = { ...req.body, cover_image: coverImage };
     } else {
-      payload = { ...req.body, cover_image: bufferImage };
+      payload = { ...req.body };
     }
 
     const updatedService = await Service.findByIdAndUpdate(
@@ -194,7 +209,7 @@ const updateService = asyncHandler(async (req, res) => {
       {
         new: true,
       }
-    ).select('-user -categories');
+    ).select("-user -categories");
 
     if (updatedService) {
       const updatedImagesBase64 = updatedService.images.map((buffer) =>
