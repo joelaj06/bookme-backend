@@ -1,20 +1,42 @@
 const asyncHandler = require('express-async-handler');
 const Message = require('../models/message_model');
 const { Chat } = require('../models/chat_model');
+const { User } = require('../models/user_model');
+const { sendPushNotification } = require('./push_notification_controller');
 
 //@desc create message in chat
 //@route /api/:chatId/message
 //@access PRIVATE
 const postMessage = asyncHandler(async(req, res)=>{
 
+    const sender = req.user;
     const {id:chatId} = req.params;
-    const {recipient, message} = req.body;
+    const {recipient, message,
+        fcm_notification} = req.body;
 
+
+    const receiver = await User.findById(recipient);
     const chatRoom = await Chat.findById(chatId);
     if(!chatRoom){
         res.status(400);
         throw new Error('Failed to connect to chat');
     }
+
+    if(receiver.device_token){
+        const notification = {
+          title: 'New message',
+          body: `You have a new message from ${sender.first_name} ${sender.last_name}`
+        }
+        const data = {
+          route : fcm_notification.route,
+        }
+        const payload = {
+          notification,
+          data,
+          token: receiver.device_token,
+        } 
+         sendPushNotification(payload);
+      }
 
     const currentLoggedInUser = req.user;
 

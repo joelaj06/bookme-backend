@@ -1,5 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const {Booking,validateBooking} = require("../models/booking_model");
+const { User } = require("../models/user_model");
+const { sendPushNotification } = require("./push_notification_controller");
 
 //@desc book an agent
 //@route /api/bookings
@@ -22,7 +24,31 @@ const addBooking = asyncHandler(async (req, res) => {
     agent,
     agent_id,
     user_id,
+    fcm_notification,
   } = req.body;
+
+  const client = await User.findById(user);
+  const provider = await User.findById(agent);
+  if(client.device_token){
+    const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+    const date = new Date(end_date).toLocaleDateString('en-us',
+    options);
+    const notification = {
+      title: 'Your Expertise Requested',
+      body: `Great news! You\'ve got a new booking from ${client.first_name} ${client.last_name} for ${date}`
+    }
+    const data = {
+      route : fcm_notification.route,
+    }
+    const payload = {
+      notification,
+      data,
+      token: provider.device_token,
+    }
+     sendPushNotification(payload);
+  }
+
+ 
   const booking = new Booking({
     user,
     service,
@@ -70,6 +96,10 @@ const getBookings = asyncHandler(async (req, res) => {
   }
 
   if (!req.params.id) {
+    if(!userId && !agentId){
+      res.status(400);
+      throw new Error('Invalid query');
+    }
     const bookings = await Booking.find(query)
       .populate({ path: "user", select: "-token -password -tokens -image" })
       .populate({ path: "service", select: "-categories -images -user"})

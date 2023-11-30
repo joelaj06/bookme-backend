@@ -9,12 +9,13 @@ const userSchema = new mongoose.Schema({
   address : String, 
   status : String,
   tokens : [{type : Object}],
-  image : {data: String,},
+  image : {type: String,},
   gender : String,
   job_title : String,
   job_description: String,
   is_agent: Boolean,
   company: String,
+  device_token : String,
   skills : [{type: String}],
   
 
