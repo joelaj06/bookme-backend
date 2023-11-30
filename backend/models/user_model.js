@@ -37,6 +37,7 @@ function validateUserLogins(userLogins) {
     password: Joi.string()
       .pattern(new RegExp("^[a-zA-Z0-9]{3,30}$"))
       .required(),
+    device_token : Joi.string().allow(null, '')
   });
 
   const validate = schema.validate(userLogins);

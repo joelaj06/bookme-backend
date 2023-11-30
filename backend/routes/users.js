@@ -8,10 +8,12 @@ const {
   getUser,
   logout,
   getAgents,
+  initiatePushNotification
 } = require("../controllers/users_controller.js");
 const { protect } = require("../middleware/auth_middleware");
 const router = express.Router();
 
+router.post("/notification", initiatePushNotification)
 router.get("/agents",getAgents);
 router.post("/auth/signup", addUser);
 router.post("/auth/login", loginUser);

@@ -1,7 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const Service = require("../models/service_model");
 const Review = require("../models/review_model");
-const { cleanSingleRecord } = require("../utils/helper");
+const { uploadImage } = require("../utils/cloudinary");
 
 //@desc Get services by user
 //@route GET /api/services/user
@@ -20,13 +20,7 @@ const getServiceByUser = asyncHandler(async (req, res) => {
     .populate({ path: "user", select: "-password -token -tokens" });
 
   if (services) {
-    const servicesWithBase64Images = services.map((service) => ({
-      ...service._doc,
-      images: service.images.map((imageBuffer) =>
-        imageBuffer.toString("base64")
-      ),
-    }));
-    res.status(200).json(cleanSingleRecord(servicesWithBase64Images));
+    res.status(200).json((services[0]));
   } else {
     res.status(400);
     throw new Error("Service not found");
@@ -82,7 +76,7 @@ const getServices = asyncHandler(async (req, res) => {
       services = await Service.find({})
         .populate({
           path: "user",
-          select: "-password -image -tokens", // Exclude "password" and "tokens"
+          select: "-password -tokens", // Exclude "password" and "tokens"
         })
         .populate({ path: "categories" })
         .limit(limit)
@@ -91,14 +85,7 @@ const getServices = asyncHandler(async (req, res) => {
     totalCount = services.length;
     res.set("total-count", totalCount);
 
-    const servicesWithBase64Images = services.map((service) => ({
-      ...service._doc,
-      images: service.images.map((imageBuffer) =>
-        imageBuffer.toString("base64")
-      ),
-    }));
-
-    res.status(200).json(servicesWithBase64Images);
+    res.status(200).json(services);
   } else {
     const service = await Service.findById(req.params.id);
     if (service) {
@@ -132,7 +119,7 @@ const addService = asyncHandler(async (req, res) => {
     const base64String = req.body.cover_image;
     coverImage = await uploadImage(base64String);
   }
-
+ 
   if (req.body.images) {
     payload = {
       ...req.body,

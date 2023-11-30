@@ -7,6 +7,21 @@ const {
   validateUserLogins,
 } = require("../models/user_model");
 const {cloudinary, uploadImage} = require("../utils/cloudinary");
+const { sendPushNotification } = require("./push_notification_controller");
+
+//test for push notification
+const initiatePushNotification = asyncHandler(async (req, res) =>{
+  const {data, token,notification} = req.body
+  const payload = {
+    notification,
+    data,
+    token,
+  }
+   sendPushNotification(payload);
+   res.status(200).json({message: 'Notification send succefully'});
+  
+})
+
 
 // @desc Get all users
 // @route GET /api/users
@@ -112,7 +127,7 @@ const addUser = asyncHandler(async (req, res) => {
 // @route GET /api/users/login
 // @access Public
 const loginUser = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password,device_token } = req.body;
 
   const { error } = validateUserLogins(req.body);
   if (error) {
@@ -134,6 +149,7 @@ const loginUser = asyncHandler(async (req, res) => {
       }
 
       await User.findByIdAndUpdate(user._id, {
+        device_token : device_token,
         tokens: [...oldTokens, { token, signedAt: Date.now().toString() }],
       });
       res.set("access_token", token);
@@ -292,7 +308,9 @@ const logout = asyncHandler(async (req, res) => {
         t.token != token;
       });
 
-      await User.findByIdAndUpdate(req.user._id, { tokens: newTokens });
+      await User.findByIdAndUpdate(req.user._id, {
+         device_token: null,
+         tokens: newTokens });
 
       res.status(200).json({ message: "User logged out successfully" });
     }
@@ -351,4 +369,5 @@ module.exports = {
   loginUser,
   getUser,
   logout,
+  initiatePushNotification
 };

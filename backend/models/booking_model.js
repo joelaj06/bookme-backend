@@ -16,6 +16,7 @@ function validateBooking(booking) {
     end_date: Joi.string().required(),
     preliminary_cost: Joi.number(),
     status: Joi.string().required(),
+    fcm_notification: Joi.object(),
     notes: Joi.string().required().allow("", null),
   });
 
