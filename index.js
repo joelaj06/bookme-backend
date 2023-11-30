@@ -10,10 +10,12 @@ const reviews = require("./backend/routes/reviews");
 const favorites = require("./backend/routes/favorites");
 const chats = require("./backend/routes/chats");
 const socketIo = require("socket.io"); // Import the Socket.io library
+const { configCloudinary } = require("./backend/utils/cloudinary.js");
 
 const app = express();
 
 connectToDatabase();
+configCloudinary();
 
 app.use(express.json({ limit: "5mb" }));
 
@@ -36,8 +38,7 @@ const io = socketIo(server); // Attach Socket.io to the server
 let activeUsers = [];
 
 io.on("connection", (socket) => {
-  console.log("A user connected to the socket");
-
+ 
   // register users to the socket
   socket.on("register", (newUserId) => {
     console.log(newUserId);
@@ -60,19 +61,11 @@ io.on("connection", (socket) => {
     if (user) {
       socket.to(user.socketId).emit("receive-message", data);
       //send message notification
-      /*
-         {
-          chatId: '6543ad7d49f38e7805c2ea3d',
-          recipient: '6481dd52edc2a88e65c66bb6',
-          message: { message_text: 'Hi' }
-        }
-          */
          const message = {
           ...data,
           date: new Date(),
           isRead: false
          }
-         console.log(message);
       socket.to(user.socketId).emit("get-notification",message);
     }
   });

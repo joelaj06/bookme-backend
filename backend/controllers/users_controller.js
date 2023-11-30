@@ -6,6 +6,7 @@ const {
   validateUser,
   validateUserLogins,
 } = require("../models/user_model");
+const {cloudinary, uploadImage} = require("../utils/cloudinary");
 
 // @desc Get all users
 // @route GET /api/users
@@ -55,7 +56,11 @@ const addUser = asyncHandler(async (req, res) => {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(req.body.password, salt);
       const base64String = req.body.image;
-      const bufferImage = Buffer.from(base64String, "base64");
+      let image = '';
+      if(base64String){
+         image = await uploadImage(base64String);
+      }
+   
       user = new User({
         first_name: req.body.first_name,
         last_name: req.body.last_name,
@@ -66,7 +71,7 @@ const addUser = asyncHandler(async (req, res) => {
         address: req.body.address,
         job_description: req.body.job_description,
         company: req.body.company,
-        image: bufferImage,
+        image: image,
         gender: req.body.gender,
         skills: req.body.skills,
         job_title: req.body.job_title,
@@ -132,16 +137,7 @@ const loginUser = asyncHandler(async (req, res) => {
         tokens: [...oldTokens, { token, signedAt: Date.now().toString() }],
       });
       res.set("access_token", token);
-      let userImage = user.image.toString("base64");
-      // Regular expression to extract base64 string within double quotes
-      const regex = /Binary\.createFromBase64\("([^"]+)"/;
-      const match = regex.exec(userImage);
 
-      if (match) {
-        userImage = match[1];
-      } else {
-        console.log("No base64 string found in the input.");
-      }
       const userData = {
         _id: user.id,
         first_name: user.first_name,
@@ -149,12 +145,11 @@ const loginUser = asyncHandler(async (req, res) => {
         email: user.email,
         index_number: user.index_number,
         phone: user.phone,
-        image: userImage,
+        image: user.image,
         address: user.address,
         job_description: user.job_description,
         company: user.company,
         status: user.status,
-        // token: token,
         is_agent: user.is_agent,
       };
       res.status(200).json({
@@ -223,14 +218,16 @@ const updateUser = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   } else {
     let body;
-
+  
+    let imageRes = null;
+   
     if (req.body.image) {
       const base64String = req.body.image;
-      //  Convert the base64 string to a buffer
-      const buffer = Buffer.from(base64String, "base64");
+      //upload image to cloudinary 
+      const image = await uploadImage(base64String);
       body = {
         ...req.body,
-        image: buffer,
+        image: image,
       };
     } else {
       body = {
@@ -242,12 +239,11 @@ const updateUser = asyncHandler(async (req, res) => {
       new: true,
     });
 
-    const base64Image = updatedUser.image.toString();
     res.status(200).json({
       _id: updatedUser.id,
       first_name: updatedUser.first_name,
       last_name: updatedUser.last_name,
-      image: base64Image,
+      image: updatedUser.image,
       email: updatedUser.email,
       index_number: updatedUser.index_number,
       phone: updatedUser.phone,
