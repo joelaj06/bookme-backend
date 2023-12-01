@@ -1,6 +1,6 @@
 const admin = require("firebase-admin");
 
-const serviceAccount = require("../config/push_notification_key.json");
+const serviceAccount = require("../../push_notification_key.json");
 
  admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
